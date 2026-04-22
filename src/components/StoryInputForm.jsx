@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { THEMES } from '../lib/themes';
+import { THEMES, VOICES } from '../lib/themes';
 
 /**
- * @param {{ onSubmit: (name: string, theme: string) => void, isLoading: boolean }} props
+ * @param {{ onSubmit: (name: string, theme: string, voiceId: string) => void, isLoading: boolean }} props
  */
 export default function StoryInputForm({ onSubmit, isLoading }) {
   const [name, setName] = useState('');
   const [selectedTheme, setSelectedTheme] = useState(THEMES[0].id);
+  const [selectedVoice, setSelectedVoice] = useState(VOICES[0].id);
   const [validationError, setValidationError] = useState('');
 
   function handleSubmit(e) {
@@ -19,7 +20,7 @@ export default function StoryInputForm({ onSubmit, isLoading }) {
       return;
     }
     setValidationError('');
-    onSubmit(trimmed, selectedTheme);
+    onSubmit(trimmed, selectedTheme, selectedVoice);
   }
 
   return (
@@ -103,6 +104,50 @@ export default function StoryInputForm({ onSubmit, isLoading }) {
               >
                 <span className="text-2xl" aria-hidden="true">{theme.emoji}</span>
                 <span>{theme.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Voice picker */}
+        <div className="flex flex-col gap-3">
+          <p
+            className="text-sm font-semibold uppercase tracking-widest"
+            style={{ color: 'var(--gold-dim)' }}
+          >
+            Pick a Narrator
+          </p>
+          <div
+            role="radiogroup"
+            aria-label="Narrator voice"
+            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+          >
+            {VOICES.map((voice) => (
+              <button
+                key={voice.id}
+                type="button"
+                role="radio"
+                aria-checked={selectedVoice === voice.id}
+                onClick={() => setSelectedVoice(voice.id)}
+                className={`theme-option flex flex-col items-center gap-1.5 rounded-xl px-3 py-3.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-yellow-500/50 ${
+                  selectedVoice === voice.id ? 'theme-option--selected' : ''
+                }`}
+                style={{
+                  background:
+                    selectedVoice === voice.id
+                      ? 'rgba(240, 198, 84, 0.12)'
+                      : 'rgba(255, 255, 255, 0.04)',
+                  border:
+                    selectedVoice === voice.id
+                      ? '1px solid rgba(240, 198, 84, 0.4)'
+                      : '1px solid rgba(255, 255, 255, 0.08)',
+                  color:
+                    selectedVoice === voice.id ? '#f0c654' : 'rgba(232, 224, 212, 0.7)',
+                }}
+              >
+                <span className="text-xl" aria-hidden="true">{voice.emoji}</span>
+                <span className="text-xs font-semibold">{voice.label}</span>
+                <span className="text-[10px] opacity-60">{voice.description}</span>
               </button>
             ))}
           </div>

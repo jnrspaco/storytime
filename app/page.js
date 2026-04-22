@@ -5,6 +5,7 @@ import StoryInputForm from '@/src/components/StoryInputForm';
 import LoadingOverlay from '@/src/components/LoadingOverlay';
 import StoryCard from '@/src/components/StoryCard';
 import NarrationPlayer from '@/src/components/NarrationPlayer';
+import AmbientPlayer from '@/src/components/AmbientPlayer';
 
 /** Generate random stars for the background */
 function generateStars(count) {
@@ -27,20 +28,23 @@ export default function Home() {
   const [session, setSession] = useState({
     childName: '',
     theme: '',
+    voiceId: '',
     storyText: null,
     status: 'input',
   });
   const [activeSegmentIndex, setActiveSegmentIndex] = useState(null);
   const [storySegments, setStorySegments] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isNarrationPlaying, setIsNarrationPlaying] = useState(false);
 
   const stars = useMemo(() => generateStars(80), []);
 
-  async function generateStory(name, theme) {
-    setSession({ childName: name, theme, storyText: null, status: 'generating' });
+  async function generateStory(name, theme, voiceId) {
+    setSession({ childName: name, theme, voiceId, storyText: null, status: 'generating' });
     setActiveSegmentIndex(null);
     setStorySegments([]);
     setErrorMessage('');
+    setIsNarrationPlaying(false);
 
     try {
       const res = await fetch('/api/generate-story', {
@@ -65,18 +69,23 @@ export default function Home() {
   }
 
   function handleNewStory() {
-    setSession({ childName: '', theme: '', storyText: null, status: 'input' });
+    setSession({ childName: '', theme: '', voiceId: '', storyText: null, status: 'input' });
     setActiveSegmentIndex(null);
     setStorySegments([]);
     setErrorMessage('');
+    setIsNarrationPlaying(false);
   }
 
   function handleRetry() {
-    generateStory(session.childName, session.theme);
+    generateStory(session.childName, session.theme, session.voiceId);
   }
 
   const handleSegmentChange = useCallback((idx) => {
     setActiveSegmentIndex(idx);
+  }, []);
+
+  const handlePlayStateChange = useCallback((playing) => {
+    setIsNarrationPlaying(playing);
   }, []);
 
   const isGenerating = session.status === 'generating';
@@ -110,7 +119,7 @@ export default function Home() {
           <div className="text-center animate-fade-in-up">
             <div className="moon-glow inline-block text-6xl mb-4">🌙</div>
             <h1
-              className="text-5xl font-extrabold tracking-tight sm:text-6xl"
+              className="text-4xl font-extrabold tracking-tight sm:text-5xl"
               style={{
                 fontFamily: 'var(--font-display)',
                 background: 'linear-gradient(135deg, #f0c654, #f8e8a0, #f0c654)',
@@ -172,7 +181,13 @@ export default function Home() {
               <NarrationPlayer
                 storyText={session.storyText}
                 segments={storySegments}
+                voiceId={session.voiceId}
                 onSegmentChange={handleSegmentChange}
+                onPlayStateChange={handlePlayStateChange}
+              />
+              <AmbientPlayer
+                theme={session.theme}
+                isPlaying={isNarrationPlaying}
               />
             </div>
           )}

@@ -4,7 +4,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 
 /** @typedef {'idle'|'loading'|'playing'|'paused'|'error'} PlayerStatus */
 
-export default function NarrationPlayer({ storyText, segments, onSegmentChange }) {
+export default function NarrationPlayer({ storyText, segments, voiceId, onSegmentChange, onPlayStateChange }) {
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState(null);
   const audioRef = useRef(null);
@@ -17,6 +17,11 @@ export default function NarrationPlayer({ storyText, segments, onSegmentChange }
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     };
   }, []);
+
+  // Notify parent of play state changes
+  useEffect(() => {
+    onPlayStateChange?.(status === 'playing');
+  }, [status, onPlayStateChange]);
 
   const stopTracking = useCallback(() => {
     clearInterval(intervalRef.current);
@@ -43,10 +48,13 @@ export default function NarrationPlayer({ storyText, segments, onSegmentChange }
     setStatus('loading');
     setErrorMessage(null);
     try {
+      const body = { text: storyText };
+      if (voiceId) body.voice_id = voiceId;
+
       const res = await fetch('/api/narrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: storyText }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -133,7 +141,6 @@ export default function NarrationPlayer({ storyText, segments, onSegmentChange }
       )}
 
       <div className="flex items-center gap-3">
-        {/* Listen / Play */}
         {(status === 'idle' || status === 'error') && (
           <button
             onClick={status === 'error' ? fetchAudio : handlePlay}
